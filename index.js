@@ -40,7 +40,7 @@ app.post('/create-payment', async (req, res) => {
     order_id,
     sandbox: 1,
     result_url: process.env.WEBFLOW_URL + '/success',
-    server_url: 'https://YOUR-SERVER.up.railway.app/callback'
+    server_url: 'https://shop-server-production-73ba.up.railway.app/callback'
   }
 
   const data = Buffer.from(JSON.stringify(params)).toString('base64')
