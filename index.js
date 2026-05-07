@@ -23,32 +23,36 @@ function liqpaySign(data) {
 
 // Створення платежу
 app.post('/create-payment', async (req, res) => {
-  const { order_id, amount, description, items } = req.body
+  try {
+    const { order_id, amount, description, items } = req.body
 
-  await pool.query(
-    'INSERT INTO orders (order_id, items, amount, status) VALUES ($1, $2, $3, $4)',
-    [order_id, JSON.stringify(items), amount, 'pending']
-  )
+    await pool.query(
+      'INSERT INTO orders (order_id, items, amount, status) VALUES ($1, $2, $3, $4)',
+      [order_id, JSON.stringify(items), amount, 'pending']
+    )
 
-  const params = {
-    version: 3,
-    public_key: process.env.LIQPAY_PUBLIC_KEY,
-    action: 'pay',
-    amount,
-    currency: 'UAH',
-    description,
-    order_id,
-    sandbox: 1,
-    result_url: process.env.WEBFLOW_URL + '/success',
-    server_url: 'https://shop-server-production-73ba.up.railway.app/callback'
+    const params = {
+      version: 3,
+      public_key: process.env.LIQPAY_PUBLIC_KEY,
+      action: 'pay',
+      amount,
+      currency: 'UAH',
+      description,
+      order_id,
+      sandbox: 1,
+      result_url: process.env.WEBFLOW_URL + '/success',
+      server_url: 'https://shop-server-production-73ba.up.railway.app/callback'
+    }
+
+    const data = Buffer.from(JSON.stringify(params)).toString('base64')
+    const signature = liqpaySign(data)
+
+    res.json({ data, signature })
+  } catch (err) {
+    console.error('create-payment error:', err.message)
+    res.status(500).json({ error: err.message })
   }
-
-  const data = Buffer.from(JSON.stringify(params)).toString('base64')
-  const signature = liqpaySign(data)
-
-  res.json({ data, signature })
 })
-
 // Callback від LiqPay
 app.post('/callback', async (req, res) => {
   const { data, signature } = req.body
